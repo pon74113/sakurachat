@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SakuraChat</title>
+  <style>
+    :root {
+      --bg-color: rgba(0, 0, 0, 0.7);
+      --text-color: white;
+      --highlight: #ffd700;
+      --green: #90ffb0;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-image: url('/static/images/555.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      min-height: 100vh;
+      color: var(--text-color);
+      display: flex;
+    }
+
+    .auth-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 40px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .auth-container input {
+      padding: 10px;
+      margin-bottom: 10px;
+      width: 100%;
+      border-radius: 6px;
+      border: none;
+    }
+
+    .auth-container button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-weight: bold;
+      background-color: var(--highlight);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .chat-wrapper {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .history-panel {
+      width: 280px;
+      background-color: var(--bg-color);
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .history-panel h2 {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 5px;
+    }
+
+    .history-panel ul {
+      list-style: none;
+      padding-left: 0;
+      flex-grow: 1;
+    }
+
+    .history-panel li {
+      margin-bottom: 15px;
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9em;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 60px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      background-color: rgba(0, 0, 0, 0.5);
+      min-height: 100vh;
+    }
+
+    .points-panel {
+      width: 260px;
+      background-color: var(--bg-color);
+      padding: 20px;
+      height: 100vh;
+      color: var(--highlight);
+      font-size: 1em;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .info-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.1em;
+      padding: 8px 0;
+    }
+
+    #totalCostDisplay, #pointsDisplay {
+      font-weight: bold;
+    }
+
+    @keyframes flash {
+      0%, 100% { color: var(--highlight); transform: scale(1); }
+      50% { color: white; transform: scale(1.3); }
+    }
+
+    .flash-points {
+      animation: flash 0.6s ease-in-out;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 1em;
+      font-weight: bold;
+    }
+
+    .chatbox {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      max-width: 600px;
+      width: 100%;
+      margin-bottom: 30px;
+    }
+
+    .chatbox input[type="text"] {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+
+    .chatbox button {
+      padding: 12px 20px;
+      background-color: #ffffff;
+      color: #333;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .response {
+      margin-top: 20px;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      color: #fff;
+      white-space: pre-wrap;
+      text-align: center;
+    }
+
+    .cost {
+      margin-top: 10px;
+      font-size: 0.9em;
+      color: var(--green);
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container" id="authContainer">
+    <h2>Login or Register</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <br />
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+    <div class="message" id="authMessage"></div>
+  </div>
+
+  <div class="chat-wrapper" id="chatContainer" style="display:none;">
+    <div class="history-panel">
+      <h2>💬 Chat History</h2>
+      <ul id="chatHistory"></ul>
+      <button class="clear-button" onclick="clearHistory()" type="button">🧹 Clear History</button>
+    </div>
+
+    <div class="main-content">
+      <h1>SakuraChat</h1>
+      <div class="chatbox">
+        <input type="text" id="questionInput" placeholder="Type your question..." />
+        <button onclick="sendQuestion()">Send</button>
+      </div>
+      <div class="response" id="responseBox"></div>
+      <div class="cost" id="costDisplay"></div>
+      <button onclick="logout()" style="margin-top: 20px; background: red; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Logout</button>
+    </div>
+
+    <div class="points-panel">
+      <div class="info-header">
+        <span>💰 Cost:</span><span id="totalCostDisplay">$0.000000</span>
+      </div>
+      <div class="info-header">
+        <span>⭐ Points:</span><span id="pointsDisplay">0 pts</span>
+      </div>
+      <div style="margin-top: 30px;">
+        <h3 style="color: white;">🏆 Leaderboard</h3>
+        <ul id="leaderboard" style="list-style: none; padding: 0; font-size: 0.9em;"></ul>
+      </div>
+    </div>
+  </div>
+
+<script>
+// (JS from previous message inserted here)
+
+function saveUser(username, password) {
+  let users = JSON.parse(localStorage.getItem("users")) || {};
+  if (users[username]) return false;
+  users[username] = password;
+  localStorage.setItem("users", JSON.stringify(users));
+  return true;
+}
+
+function validateUser(username, password) {
+  const users = JSON.parse(localStorage.getItem("users")) || {};
+  return users[username] === password;
+}
+
+function login() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const message = document.getElementById("authMessage");
+
+  if (validateUser(username, password)) {
+    localStorage.setItem("currentUser", username);
+    showChat();
+    updateLeaderboard();
+  } else {
+    message.innerText = "❌ Invalid username or password";
+  }
+}
+
+function register() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const message = document.getElementById("authMessage");
+
+  if (!username || !password) {
+    message.innerText = "⚠️ Please enter username and password";
+    return;
+  }
+
+  if (saveUser(username, password)) {
+    message.innerText = "✅ Registered successfully. Please login.";
+  } else {
+    message.innerText = "⚠️ Username already exists";
+  }
+}
+
+function showChat() {
+  document.getElementById("authContainer").style.display = "none";
+  document.getElementById("chatContainer").style.display = "flex";
+}
+
+function logout() {
+  localStorage.removeItem("currentUser");
+  location.reload();
+}
+
+function sendQuestion() {
+  const input = document.getElementById("questionInput");
+  const question = input.value.trim();
+  const responseBox = document.getElementById("responseBox");
+  const chatHistory = document.getElementById("chatHistory");
+  const costDisplay = document.getElementById("costDisplay");
+  const totalCostDisplay = document.getElementById("totalCostDisplay");
+  const pointsDisplay = document.getElementById("pointsDisplay");
+  const user = localStorage.getItem("currentUser");
+
+  if (!question) {
+    responseBox.innerText = "⚠️ Please enter a question.";
+    return;
+  }
+
+  responseBox.innerText = "⏳ Processing...";
+
+  fetch("/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question })
+  })
+  .then(res => res.json())
+  .then(data => {
+    const reply = data.reply;
+    const cost = parseFloat(data.cost.replace('$', '')) || 0;
+    const earnedPoints = Math.floor(cost * 100000);
+
+    let totalCost = parseFloat(localStorage.getItem(user + "_totalCost") || "0");
+    let totalPoints = parseInt(localStorage.getItem(user + "_totalPoints") || "0");
+    totalCost += cost;
+    totalPoints += earnedPoints;
+
+    totalCostDisplay.innerText = "$" + totalCost.toFixed(6);
+    pointsDisplay.innerText = `${totalPoints} pts`;
+    pointsDisplay.classList.add("flash-points");
+    setTimeout(() => pointsDisplay.classList.remove("flash-points"), 600);
+
+    const li = document.createElement("li");
+    li.innerHTML = `<strong>You:</strong> ${question}<br/><strong>AI:</strong> ${reply}`;
+    chatHistory.appendChild(li);
+    responseBox.innerText = reply;
+
+    const historyArray = JSON.parse(localStorage.getItem(user + "_chatHistory") || "[]");
+    historyArray.push({ question, reply });
+    localStorage.setItem(user + "_chatHistory", JSON.stringify(historyArray));
+    localStorage.setItem(user + "_totalCost", totalCost.toFixed(6));
+    localStorage.setItem(user + "_totalPoints", totalPoints);
+
+    updateLeaderboard();
+    input.value = "";
+  })
+  .catch(error => {
+    console.error(error);
+    responseBox.innerText = "❌ Failed to contact AI.";
+  });
+}
+
+function updateLeaderboard() {
+  const leaderboardEl = document.getElementById("leaderboard");
+  const users = JSON.parse(localStorage.getItem("users")) || {};
+
+  const userData = Object.keys(users).map(username => {
+    const points = parseInt(localStorage.getItem(username + "_totalPoints") || "0");
+    return { username, points };
+  });
+
+  userData.sort((a, b) => b.points - a.points);
+
+  leaderboardEl.innerHTML = userData.slice(0, 5).map((user, index) => {
+    const medal = ["🥇", "🥈", "🥉", "🏅", "🎖️"][index] || "🔸";
+    return `<li>${medal} ${index + 1}. ${user.username} - ${user.points} pts</li>`;
+  }).join("");
+}
+
+window.onload = () => {
+  if (localStorage.getItem("currentUser")) {
+    showChat();
+    updateLeaderboard();
+  }
+};
+
+function clearHistory() {
+  const user = localStorage.getItem("currentUser");
+  if (!user) return;
+
+  const confirmClear = confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติและรีเซ็ตแต้มทั้งหมด?");
+  if (!confirmClear) return;
+
+  // ลบข้อมูลจาก localStorage
+  localStorage.removeItem(user + "_chatHistory");
+  localStorage.removeItem(user + "_totalPoints");
+  localStorage.removeItem(user + "_totalCost");
+
+  // เคลียร์ข้อมูลจากหน้าจอ
+  document.getElementById("chatHistory").innerHTML = "";
+  document.getElementById("pointsDisplay").innerText = "0 pts";
+  document.getElementById("totalCostDisplay").innerText = "$0.000000";
+  document.getElementById("responseBox").innerText = "";
+  document.getElementById("costDisplay").innerText = "";
+
+  // อัปเดต leaderboard
+  updateLeaderboard();
+}
+</script>
+
+</body>
+</html>
